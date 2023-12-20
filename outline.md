@@ -1,0 +1,5 @@
+- Burn 
+   - pros: author replies very fast, can see progress in terminal  
+   - cons: in active development, still have breaking change, wgpu is slow, support for onnx is limited   
+- tokenizer 
+   - customized hasher 
