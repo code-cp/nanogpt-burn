@@ -1,5 +1,11 @@
 - Burn 
    - pros: author replies very fast, can see progress in terminal  
-   - cons: in active development, still have breaking change, wgpu is slow, support for onnx is limited   
+   - cons: in active development, still have breaking change, wgpu is slow, support for onnx is limited  
+- dataset 
+   - custom dataset  
 - tokenizer 
-   - customized hasher 
+   - customized hasher
+- batcher 
+   - no mask 
+- attention 
+   - tril  
