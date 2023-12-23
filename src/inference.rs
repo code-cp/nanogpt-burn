@@ -52,6 +52,7 @@ pub fn infer<B: Backend> (
         let item = batcher.batch(vec![samples.clone(); 4]); // Batch samples using the batcher
         let logits = model.infer(item); // Get model predictions
         let class_index = logits.argmax(1).into_data().convert::<i32>().value[0];
+        println!("class_index {class_index}"); 
     
         let new_char = tokenizer.untokenize(&[class_index as usize]); 
         samples = TextGenerationItem::new(samples.text + new_char.as_str()); 
