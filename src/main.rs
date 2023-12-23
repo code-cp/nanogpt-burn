@@ -2,11 +2,13 @@ use std::{fs, io::prelude::*, path::Path};
 use burn::backend::wgpu::WgpuDevice;
 use burn::backend::{Autodiff, Wgpu, wgpu::AutoGraphicsApi};
 use burn::optim::decay::WeightDecayConfig;
+// use burn::backend::{libtorch::LibTorchDevice, LibTorch};
 
 use nanogpt::training::{train, ExperimentConfig}; 
 use nanogpt::gpt::TransformerDecoderConfig; 
 use nanogpt::tokenizer::SimpleTokenizer; 
 use nanogpt::data::TinyShakespeareDataset; 
+use nanogpt::inference::infer; 
 
 // #[cfg(feature = "f16")]
 // type Elem = burn::tensor::f16;
@@ -17,8 +19,14 @@ type Backend = burn::backend::Autodiff<burn::backend::Wgpu>;
 // type Backend = burn::backend::Autodiff<burn::backend::LibTorch<Elem>>;
 
 fn main() {
+    let batch_size = 2; 
+    let block_size = 10; 
+    let epoch = 1; 
+
     let config = ExperimentConfig::new(
-        TransformerDecoderConfig::new(),
+        TransformerDecoderConfig::new(
+            
+        ),
         burn::optim::AdamConfig::new().with_weight_decay(Some(WeightDecayConfig::new(1.0e-6))),
     );
 
@@ -26,8 +34,11 @@ fn main() {
     let dataset_char = fs::read_to_string(data_dir).expect("Should read dataset");
     let tokenizer = SimpleTokenizer::new(&dataset_char); 
 
+    let artifact_dir = "./tmp"; 
+
     train::<Backend, TinyShakespeareDataset>(
         WgpuDevice::default(),
+        // LibTorchDevice::Cuda(0),
         // if cfg!(target_os = "macos") {
         //     burn::tensor::Device::<Backend>::Mps
         // } else {
@@ -37,6 +48,12 @@ fn main() {
         TinyShakespeareDataset::test(data_dir, config.batch_size),
         config,
         tokenizer, 
-        "/tmp",
+        artifact_dir,
     );
+
+    infer::<Backend>(
+        WgpuDevice::default(),
+        tokenizer, 
+        artifact_dir,
+    );  
 }

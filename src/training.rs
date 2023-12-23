@@ -22,9 +22,9 @@ use crate::tokenizer::SimpleTokenizer;
 pub struct ExperimentConfig {
     pub transformer: TransformerDecoderConfig, 
     pub optimizer: AdamConfig,
-    #[config(default=256)] 
+    #[config(default=128)] 
     pub block_size: usize, 
-    #[config(default=64)]
+    #[config(default=2)]
     pub batch_size: usize, 
     #[config(default=10)]
     pub max_iters: usize,     

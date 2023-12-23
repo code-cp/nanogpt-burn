@@ -12,10 +12,10 @@ use crate::attention::{MultiHeadAttention, MultiHeadAttentionConfig, HeadConfig,
 
 #[derive(Config)]
 pub struct TransformerDecoderConfig {
-    #[config(default=64)]
+    #[config(default=2)]
     pub batch_size: usize,
     /// Size of context length
-    #[config(default=256)]  
+    #[config(default=128)]  
     pub block_size: usize,  
     /// Size of the model 
     #[config(default=384)] 
