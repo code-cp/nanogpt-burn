@@ -15,7 +15,10 @@ pub struct HeadConfig {
     head_size: usize,
     dropout: f64,
     /// The type of function used to initialize neural network parameters
-    #[config("Initializer::KaimingUniform{gain:1.0/libm::sqrt(3.0), fan_out_only:false}")]
+    /// NOTE, the format below cannot be changed, otherwise Config derive will have error 
+    #[config(
+        default = "Initializer::KaimingUniform{gain:1.0/libm::sqrt(3.0), fan_out_only:false}"
+    )]
     pub initializer: Initializer,
 }
 

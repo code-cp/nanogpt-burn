@@ -49,7 +49,7 @@ pub fn infer<B: Backend> (
     let mut samples = TextGenerationItem::new(initial_input);
     let n_chars = 100; 
     for _ in 0..n_chars {
-        let item = batcher.batch(vec![samples.clone(); 4]); // Batch samples using the batcher
+        let item = batcher.batch(vec![samples.clone(); config.batch_size]); // Batch samples using the batcher
         let logits = model.infer(item); // Get model predictions
         let class_index = logits.argmax(1).into_data().convert::<i32>().value[0];
     
