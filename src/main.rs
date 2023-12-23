@@ -19,7 +19,7 @@ type Backend = burn::backend::Autodiff<burn::backend::Wgpu>;
 // type Backend = burn::backend::Autodiff<burn::backend::LibTorch<Elem>>;
 
 fn main() {
-    let batch_size = 4; 
+    let batch_size = 16; 
     let block_size = 100; 
     let max_iters = 10; 
 

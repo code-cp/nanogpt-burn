@@ -6,6 +6,7 @@ use burn::{
 };
 // use libm::sqrtf;
 
+#[allow(clippy::all)]
 #[derive(Config)]
 pub struct HeadConfig {
     batch_size: usize,
@@ -15,7 +16,6 @@ pub struct HeadConfig {
     head_size: usize,
     dropout: f64,
     /// The type of function used to initialize neural network parameters
-    /// NOTE, the format below cannot be changed, otherwise Config derive will have error 
     #[config(
         default = "Initializer::KaimingUniform{gain:1.0/libm::sqrt(3.0), fan_out_only:false}"
     )]
