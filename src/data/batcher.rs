@@ -58,6 +58,7 @@ impl<B: Backend> Batcher<TextGenerationItem, TrainingTextGenerationBatch<B>> for
     fn batch(&self, items: Vec<TextGenerationItem>) -> TrainingTextGenerationBatch<B> {
         let item: TextGenerationBatch<B> = self.batch(items); 
         let [batch_size, block_size] = item.tokens.dims(); 
+        // println!("batch size is {batch_size}"); 
         let block_size = block_size - 1; 
 
         let tokens = item 

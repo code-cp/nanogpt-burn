@@ -39,20 +39,20 @@ fn main() {
     let tokenizer = SimpleTokenizer::new(&dataset_char); 
     let artifact_dir = "./tmp"; 
 
-    // train::<Backend, TinyShakespeareDataset>(
-    //     WgpuDevice::default(),
-    //     // LibTorchDevice::Cuda(0),
-    //     // if cfg!(target_os = "macos") {
-    //     //     burn::tensor::Device::<Backend>::Mps
-    //     // } else {
-    //     //     burn::tensor::Device::<Backend>::Cuda(0)
-    //     // },
-    //     TinyShakespeareDataset::train(data_dir, config.batch_size),
-    //     TinyShakespeareDataset::test(data_dir, config.batch_size),
-    //     config,
-    //     tokenizer, 
-    //     artifact_dir,
-    // );
+    train::<Backend, TinyShakespeareDataset>(
+        WgpuDevice::default(),
+        // LibTorchDevice::Cuda(0),
+        // if cfg!(target_os = "macos") {
+        //     burn::tensor::Device::<Backend>::Mps
+        // } else {
+        //     burn::tensor::Device::<Backend>::Cuda(0)
+        // },
+        TinyShakespeareDataset::train(data_dir, config.batch_size),
+        TinyShakespeareDataset::test(data_dir, config.batch_size),
+        config,
+        tokenizer, 
+        artifact_dir,
+    );
 
     let tokenizer = SimpleTokenizer::new(&dataset_char); 
     infer::<Backend>(
