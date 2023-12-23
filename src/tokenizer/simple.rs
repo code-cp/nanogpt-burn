@@ -52,6 +52,7 @@ impl SimpleTokenizer {
             .into_iter()
             .collect::<Vec<_>>(); 
         chars.sort();
+        // println!("chars in tokenizer {chars:?}"); 
         
         let int_to_ch = chars
             .iter()
