@@ -19,9 +19,9 @@ type Backend = burn::backend::Autodiff<burn::backend::Wgpu>;
 // type Backend = burn::backend::Autodiff<burn::backend::LibTorch<Elem>>;
 
 fn main() {
-    let batch_size = 2; 
-    let block_size = 10; 
-    let max_iters = 1; 
+    let batch_size = 16; 
+    let block_size = 100; 
+    let max_iters = 10; 
 
     let config = ExperimentConfig::new(
         TransformerDecoderConfig::new(
