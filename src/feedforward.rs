@@ -11,8 +11,6 @@ use burn::{
 #[derive(Config)]
 pub struct FeedForwardConfig {
     pub n_embd: usize, 
-    /// The dropout rate. Default: 0.2
-    #[config(default = 0.2)]
     pub dropout: f64, 
     /// The type of function used to initialize neural network parameters
     #[config(

@@ -14,7 +14,7 @@ pub struct TextGenerationBatcher {
     block_size: usize, 
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, new)]
 pub struct TextGenerationBatch<B: Backend> {
     pub tokens: Tensor<B, 2, Int>, 
 }

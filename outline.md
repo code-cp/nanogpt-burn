@@ -8,4 +8,7 @@
 - batcher 
    - no mask 
 - attention 
-   - tril  
+   - single head attention 
+      - tril
+   - multi head attention 
+- visualization 

@@ -4,3 +4,4 @@ pub mod model;
 pub mod gpt; 
 pub mod feedforward;
 pub mod attention;
+pub mod training;

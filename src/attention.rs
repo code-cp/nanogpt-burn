@@ -13,8 +13,6 @@ pub struct HeadConfig {
     block_size: usize, 
     n_embd: usize, 
     head_size: usize, 
-    /// The dropout rate. Default: 0.2
-    #[config(default = 0.2)]
     dropout: f64, 
     /// The type of function used to initialize neural network parameters
     #[config(
@@ -69,16 +67,16 @@ impl<B: Backend> Head<B> {
     /// output of size (batch, time-step, head size)
     pub fn forward(&self, x: Tensor<B, 3>) -> Tensor<B, 3> { 
         // (B,T,hs)
-        let k = self.key.forward(x); 
+        let k = self.key.forward(x.clone()); 
         // (B,T,hs)
-        let q = self.query.forward(x); 
+        let q = self.query.forward(x.clone()); 
 
         // (B, T, hs) @ (B, hs, T) -> (B, T, T)
-        let wei = (q * k.transpose()) / ((k.dims()[2] as f32).sqrt()); 
+        let wei = (q * k.clone().transpose()) / ((k.dims()[2] as f32).sqrt()); 
         // (B, T, T)
         // ref https://docs.rs/burn/0.9.0/burn/tensor/struct.Tensor.html#method.mask_fill
         // A value too low might result in NaN
-        let wei = wei.mask_fill(self.tril, -1.0e4); 
+        let wei = wei.mask_fill(self.tril.clone(), -1.0e4); 
         // (B, T, T)
         // ref https://docs.rs/burn/0.9.0/burn/tensor/activation/fn.softmax.html
         let wei = activation::softmax(wei, 2); 
@@ -93,16 +91,26 @@ impl<B: Backend> Head<B> {
 
 #[derive(Config)]
 pub struct MultiHeadAttentionConfig {
-    num_heads: usize, 
-    head_size: usize, 
+    pub n_layer: usize, 
+    pub n_head: usize, 
+    pub head_size: usize, 
+    pub n_embd: usize,
+    pub dropout: f64,  
 }
 
 impl MultiHeadAttentionConfig {
-    pub fn init<B: Backend>(&self, device: &B::Device) -> MultiHeadAttention<B> {
+    pub fn init<B: Backend>(&self, device: &B::Device, head_config: &HeadConfig) -> MultiHeadAttention<B> {
+        let layers = (0..self.n_layer)
+            .map(|_| head_config.init(device))
+            .collect::<Vec<_>>();
+
         MultiHeadAttention {
             proj: LinearConfig::new(
-                
-            ),
+                self.head_size * self.n_head, 
+                self.n_embd, 
+            ).init(device),
+            dropout: DropoutConfig::new(self.dropout).init(), 
+            heads: layers,
         }
     }
 }
@@ -111,4 +119,18 @@ impl MultiHeadAttentionConfig {
 pub struct MultiHeadAttention<B: Backend> {
     proj: Linear<B>, 
     dropout: Dropout, 
+    heads: Vec<Head<B>>, 
+}
+
+impl<B: Backend> MultiHeadAttention<B> {
+    pub fn forward(&self, x: Tensor<B, 3>) -> Tensor<B, 3> {
+        let mut inputs = Vec::new(); 
+        for head in self.heads.iter() {
+            inputs.push(head.forward(x.clone())); 
+        }
+        let x = Tensor::cat(inputs, 2); 
+        let x = self.proj.forward(x); 
+        let x = self.dropout.forward(x); 
+        x  
+    }
 }
