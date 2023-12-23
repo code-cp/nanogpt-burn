@@ -47,15 +47,20 @@ pub fn infer<B: Backend> (
     println!("Running inference ...");
     let initial_input = vec![" "; config.block_size+1].join(""); 
     let mut samples = TextGenerationItem::new(initial_input);
-    let n_chars = 100; 
+    let n_chars = 10; 
     for _ in 0..n_chars {
-        let item = batcher.batch(vec![samples.clone(); config.batch_size]); // Batch samples using the batcher
-        let logits = model.infer(item); // Get model predictions
-        let class_index = logits.argmax(1).into_data().convert::<i32>().value[0];
-        println!("class_index {class_index}"); 
+        // println!("samples {}", samples.text); 
+
+        let item = batcher.batch(vec![samples.clone(); config.batch_size]); 
+        let logits = model.infer(item); 
+        // focus only on the last time step
+        let logits = logits.slice([0..1, config.block_size-1..config.block_size, 0..tokenizer.vocab_size()]);
+        // println!("logits shape {:?}", logits.dims()); 
+        let class_index = logits.argmax(2).into_data().convert::<i32>().value[0];
+        // println!("class_index {class_index}"); 
     
         let new_char = tokenizer.untokenize(&[class_index as usize]); 
-        samples = TextGenerationItem::new(samples.text + new_char.as_str()); 
+        samples = TextGenerationItem::new(samples.text[1..].to_string() + new_char.as_str()); 
 
         // Print sample text, predicted logits and predicted class
         // avoid println which prints a new line 
