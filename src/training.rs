@@ -26,8 +26,8 @@ pub struct ExperimentConfig {
     pub block_size: usize, 
     #[config(default=64)]
     pub batch_size: usize, 
-    #[config(default=200)]
-    pub eval_iters: usize,     
+    #[config(default=10)]
+    pub max_iters: usize,     
 }
 
 pub fn train<B: AutodiffBackend, D: Dataset<TextGenerationItem> + 'static>(
@@ -76,7 +76,7 @@ pub fn train<B: AutodiffBackend, D: Dataset<TextGenerationItem> + 'static>(
         .with_file_checkpointer(CompactRecorder::new())
         .devices(vec![device])
         .grads_accumulation(accum)
-        .num_epochs(config.eval_iters)
+        .num_epochs(config.max_iters)
         .build(model, optim, lr_scheduler);
 
     let model_trained = learner.fit(dataloader_train, dataloader_test);

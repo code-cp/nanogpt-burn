@@ -28,8 +28,8 @@ impl FeedForwardConfig {
             ).with_initializer(self.initializer.clone())
             .init(device), 
             linear2: LinearConfig::new(
-                self.n_embd, 
                 4 * self.n_embd, 
+                self.n_embd, 
             ).with_initializer(self.initializer.clone())
             .init(device),
             dropout: DropoutConfig::new(self.dropout).init(), 

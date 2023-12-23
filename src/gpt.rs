@@ -62,10 +62,13 @@ impl<B: Backend> TransformerDecoderBlock<B> {
         );
         let feed_forward = feedforward_config.init(device);  
 
+        let head_size = config.n_embd / config.n_head;
+        // println!("head size {:?}", head_size); 
+
         let mha_config = MultiHeadAttentionConfig::new(
             config.n_layer,
             config.n_head, 
-            config.n_embd / config.n_head, 
+            head_size, 
             config.n_embd, 
             config.dropout, 
         );
@@ -73,7 +76,7 @@ impl<B: Backend> TransformerDecoderBlock<B> {
             config.batch_size, 
             config.block_size, 
             config.n_embd, 
-            config.n_embd / config.n_head,
+            head_size,
             config.dropout,      
         );
         let multi_head_attn = mha_config.init(device, &head_config); 

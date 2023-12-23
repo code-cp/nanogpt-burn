@@ -70,9 +70,14 @@ impl<B: Backend> Head<B> {
         let k = self.key.forward(x.clone()); 
         // (B,T,hs)
         let q = self.query.forward(x.clone()); 
-
+        // println!("q size {:?}", q.dims()); 
         // (B, T, hs) @ (B, hs, T) -> (B, T, T)
-        let wei = (q * k.clone().transpose()) / ((k.dims()[2] as f32).sqrt()); 
+        let d = (k.dims()[2] as f32).sqrt(); 
+        let kt = k.transpose(); 
+        // println!("kt size {:?}", kt.dims()); 
+        // NOTE, do NOT use *, which is elementwise multiplication 
+        let wei = q.matmul(kt) / d; 
+        // println!("wei size {:?}", wei.dims());
         // (B, T, T)
         // ref https://docs.rs/burn/0.9.0/burn/tensor/struct.Tensor.html#method.mask_fill
         // A value too low might result in NaN
@@ -84,7 +89,7 @@ impl<B: Backend> Head<B> {
         // (B,T,hs)
         let v = self.value.forward(x); 
         // (B, T, T) @ (B, T, hs) -> (B, T, hs)
-        let out = wei * v;  
+        let out = wei.matmul(v);  
         out 
     }
 }

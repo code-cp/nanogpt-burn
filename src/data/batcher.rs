@@ -34,6 +34,7 @@ impl<B: Backend> Batcher<TextGenerationItem, TextGenerationBatch<B>> for TextGen
 
         for i in 0..batch_size {
             let input = self.tokenizer.tokenize(&items[i].text); 
+            // println!("TextGenerationBatcher input {:?}", input); 
 
             tokens = tokens.slice_assign(
                 [i..i+1, 0..self.block_size+1], 
@@ -63,11 +64,13 @@ impl<B: Backend> Batcher<TextGenerationItem, TrainingTextGenerationBatch<B>> for
             .tokens
             .clone()
             .slice([0..batch_size, 0..block_size]);
+        // println!("tokens {:?}", tokens.dims()); 
         
         let targets = item
             .tokens
             .clone()
             .slice([0..batch_size, 1..block_size+1]);
+        // println!("targets {:?}", targets.dims());
 
         TrainingTextGenerationBatch {
             tokens, 

@@ -8,7 +8,13 @@ use nanogpt::gpt::TransformerDecoderConfig;
 use nanogpt::tokenizer::SimpleTokenizer; 
 use nanogpt::data::TinyShakespeareDataset; 
 
+// #[cfg(feature = "f16")]
+// type Elem = burn::tensor::f16;
+// #[cfg(not(feature = "f16"))]
+// type Elem = f32;
+
 type Backend = burn::backend::Autodiff<burn::backend::Wgpu>;
+// type Backend = burn::backend::Autodiff<burn::backend::LibTorch<Elem>>;
 
 fn main() {
     let config = ExperimentConfig::new(
@@ -22,6 +28,11 @@ fn main() {
 
     train::<Backend, TinyShakespeareDataset>(
         WgpuDevice::default(),
+        // if cfg!(target_os = "macos") {
+        //     burn::tensor::Device::<Backend>::Mps
+        // } else {
+        //     burn::tensor::Device::<Backend>::Cuda(0)
+        // },
         TinyShakespeareDataset::train(data_dir, config.batch_size),
         TinyShakespeareDataset::test(data_dir, config.batch_size),
         config,
