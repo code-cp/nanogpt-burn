@@ -12,10 +12,8 @@ use crate::attention::{MultiHeadAttention, MultiHeadAttentionConfig, HeadConfig,
 
 #[derive(Config)]
 pub struct TransformerDecoderConfig {
-    #[config(default=2)]
     pub batch_size: usize,
     /// Size of context length
-    #[config(default=128)]  
     pub block_size: usize,  
     /// Size of the model 
     #[config(default=384)] 
@@ -38,6 +36,19 @@ impl TransformerDecoderConfig {
             .collect::<Vec<_>>(); 
 
         TransformerDecoder { blocks }
+    }
+
+    pub fn init_with<B: Backend>(
+        &self,
+        record: TransformerDecoderRecord<B>,
+    ) -> TransformerDecoder<B> {
+        TransformerDecoder {
+            blocks: record
+                .blocks
+                .into_iter()
+                .map(|record| TransformerDecoderBlock::new_with(self, record))
+                .collect(),
+        }
     }
 }
 
@@ -80,6 +91,48 @@ impl<B: Backend> TransformerDecoderBlock<B> {
             config.dropout,      
         );
         let multi_head_attn = mha_config.init(device, &head_config); 
+
+        Self {
+            ln1,
+            ln2,  
+            dropout, 
+            feed_forward,
+            multi_head_attn, 
+        }
+    }
+
+    fn new_with(
+        config: &TransformerDecoderConfig,
+        record: TransformerDecoderBlockRecord<B>,
+    ) -> Self {
+        let ln1 = LayerNormConfig::new(config.n_embd).init_with(record.ln1); 
+        let ln2 = LayerNormConfig::new(config.n_embd).init_with(record.ln2); 
+        let dropout = DropoutConfig::new(config.dropout).init(); 
+        
+        let feedforward_config = FeedForwardConfig::new(
+            config.n_embd, 
+            config.dropout,     
+        );
+        let feed_forward = feedforward_config.init_with(record.feed_forward);
+
+        let head_size = config.n_embd / config.n_head;
+        // println!("head size {:?}", head_size); 
+
+        let mha_config = MultiHeadAttentionConfig::new(
+            config.n_layer,
+            config.n_head, 
+            head_size, 
+            config.n_embd, 
+            config.dropout, 
+        );
+        let head_config = HeadConfig::new(
+            config.batch_size, 
+            config.block_size, 
+            config.n_embd, 
+            head_size,
+            config.dropout,      
+        );
+        let multi_head_attn = mha_config.init_with(&head_config, record.multi_head_attn); 
 
         Self {
             ln1,

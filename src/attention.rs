@@ -50,6 +50,32 @@ impl HeadConfig {
             dropout: DropoutConfig::new(self.dropout).init(),
         }
     }
+
+    pub fn init_with<B: Backend>(&self, record: HeadRecord<B>) -> Head<B> {
+        // compute the weight matrix 
+        let tril: Tensor<B, 3, Int> = Tensor::ones(
+            [self.batch_size, self.block_size, self.block_size], 
+            &B::Device::default(), 
+        ).tril(-1);
+        let tril = tril.equal_elem(0); 
+
+        Head {
+            key: LinearConfig::new(
+                self.n_embd, 
+                self.head_size, 
+            ).init_with(record.key),
+            query: LinearConfig::new(
+                self.n_embd, 
+                self.head_size, 
+            ).init_with(record.query),
+            value: LinearConfig::new(
+                self.n_embd, 
+                self.head_size, 
+            ).init_with(record.value),
+            tril, 
+            dropout: DropoutConfig::new(self.dropout).init(),
+        }
+    }
 }
 
 #[derive(Module, Debug)]
@@ -116,6 +142,27 @@ impl MultiHeadAttentionConfig {
             ).init(device),
             dropout: DropoutConfig::new(self.dropout).init(), 
             heads: layers,
+        }
+    }
+
+    pub fn init_with<B: Backend>(
+        &self,
+        head_config: &HeadConfig,
+        record: MultiHeadAttentionRecord<B>,
+    ) -> MultiHeadAttention<B> {
+        let heads = record
+            .heads
+            .into_iter()
+            .map(|record| head_config.init_with(record))
+            .collect();
+
+        MultiHeadAttention {
+            proj: LinearConfig::new(
+                self.head_size * self.n_head, 
+                self.n_embd, 
+            ).init_with(record.proj),
+            dropout: DropoutConfig::new(self.dropout).init(), 
+            heads,
         }
     }
 }

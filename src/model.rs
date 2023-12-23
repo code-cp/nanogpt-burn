@@ -43,23 +43,22 @@ impl TextGenerationModelConfig {
     pub fn init_with<B: Backend>(
         &self,
         record: TextGenerationModelRecord<B>,
-    ) -> TextGenerationModelRecord<B> {
-        let output =
-            LinearConfig::new(self.transformer.d_model, self.n_classes).init_with(record.output);
-        let transformer = self.transformer.init_with(record.transformer);
-        let embedding_token = EmbeddingConfig::new(self.vocab_size, self.transformer.d_model)
-            .init_with(record.embedding_token);
-        let embedding_pos = EmbeddingConfig::new(self.max_seq_length, self.transformer.d_model)
-            .init_with(record.embedding_pos);
+    ) -> TextGenerationModel<B> {
+        let lm_head = LinearConfig::new(self.transformer.n_embd, self.vocab_size).init_with(record.lm_head); 
+        let transformer = self.transformer.init_with(record.transformer); 
+        let embedding_token = 
+            EmbeddingConfig::new(self.vocab_size, self.transformer.n_embd).init_with(record.embedding_token); 
+        let embedding_pos = 
+            EmbeddingConfig::new(self.block_size, self.transformer.n_embd).init_with(record.embedding_pos); 
 
-        TextClassificationModel {
-            transformer,
-            embedding_token,
-            embedding_pos,
-            output,
-            n_classes: self.n_classes,
-            max_seq_length: self.max_seq_length,
-        }
+        TextGenerationModel {
+            transformer, 
+            embedding_token, 
+            embedding_pos, 
+            lm_head, 
+            vocab_size: self.vocab_size, 
+            block_size: self.block_size, 
+        } 
     }
 }
 
@@ -106,6 +105,29 @@ impl<B: Backend> TextGenerationModel<B> {
             output: output_flatten, 
             targets: targets_flatten, 
         }
+    }
+
+    pub fn infer(
+        &self, 
+        item: TrainingTextGenerationBatch<B>, 
+    ) -> Tensor<B, 3> {
+        let [batch_size, block_size] = item.tokens.dims();
+        let device = &self.devices()[0];   
+
+        let inputs = item.tokens.to_device(device); 
+
+        // batch size x context size 
+        let index_positions = Tensor::arange(0..block_size, device)
+        .reshape([1, block_size])
+        .repeat(0, batch_size); 
+
+        let embedding_positions = self.embedding_pos.forward(index_positions); 
+        let embedding_tokens = self.embedding_token.forward(inputs);
+        let embedding = embedding_positions + embedding_tokens; 
+
+        let encoded = self.transformer.forward(embedding);
+        let output = self.lm_head.forward(encoded);
+        output 
     }
 }
 

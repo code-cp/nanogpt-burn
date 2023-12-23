@@ -2,7 +2,7 @@ use burn::{
     config::Config,
     data::dataloader::batcher::Batcher,
     module::Module,
-    record::{CompactRecorder, Recorder},
+    record::{CompactRecorder, Recorder, DefaultRecorder},
     tensor::backend::Backend,
 };
 use std::sync::Arc;
@@ -13,7 +13,6 @@ use crate::training::ExperimentConfig;
 use crate::model::TextGenerationModelConfig; 
 
 pub fn infer<B: Backend> (
-    device: B::Device, 
     artifact_dir: &str, 
     tokenizer: SimpleTokenizer,
 ) {
@@ -31,9 +30,9 @@ pub fn infer<B: Backend> (
 
     // Load pre-trained model weights
     println!("Loading weights ...");
-    let record = CompactRecorder::new()
+    let record = DefaultRecorder::new()
         .load(format!("{artifact_dir}/model").into())
-        .expect("Trained model weights");
+        .expect("Should load trained model weights");
 
     // Create model using loaded weights
     println!("Creating model ...");
@@ -42,24 +41,23 @@ pub fn infer<B: Backend> (
         tokenizer.vocab_size(),
         config.block_size,
     )
-    .init_with::<B>(record) // Initialize model with loaded weights
-    .to_device(&device); // Move model to computation device\
+    .init_with::<B>(record); // Move model to computation device\
 
     // Run inference on the given text samples
     println!("Running inference ...");
-    let mut samples = TextGenerationItem::new("".to_string());
+    let initial_input = vec![" "; config.block_size+1].join(""); 
+    let mut samples = TextGenerationItem::new(initial_input);
     let n_chars = 100; 
     for _ in 0..n_chars {
-        let item = batcher.batch(samples.clone()); // Batch samples using the batcher
-        let prediction = model.infer(item); // Get model predictions
+        let item = batcher.batch(vec![samples.clone(); 4]); // Batch samples using the batcher
+        let logits = model.infer(item); // Get model predictions
+        let class_index = logits.argmax(1).into_data().convert::<i32>().value[0];
     
-        let logits = prediction.to_data(); // Convert prediction tensor to data
-        let class_index = prediction.argmax(1).into_data().convert::<i32>().value[0];
-    
-        let new_char = tokenizer.untokenize(&vec![class_index]); 
+        let new_char = tokenizer.untokenize(&[class_index as usize]); 
         samples = TextGenerationItem::new(samples.text + new_char.as_str()); 
 
         // Print sample text, predicted logits and predicted class
-        println!("{new_char}"); 
+        // avoid println which prints a new line 
+        print!("{new_char}"); 
     }
 }

@@ -36,6 +36,26 @@ impl FeedForwardConfig {
             relu: ReLU::new(), 
         }
     }
+
+    pub fn init_with<B: Backend>(
+        &self,
+        record: FeedForwardRecord<B>,
+    ) -> FeedForward<B> {
+        FeedForward {
+            linear1: LinearConfig::new(
+                self.n_embd, 
+                4 * self.n_embd, 
+            ).with_initializer(self.initializer.clone())
+            .init_with(record.linear1), 
+            linear2: LinearConfig::new(
+                4 * self.n_embd, 
+                self.n_embd, 
+            ).with_initializer(self.initializer.clone())
+            .init_with(record.linear2),
+            dropout: DropoutConfig::new(self.dropout).init(), 
+            relu: ReLU::new(), 
+        }
+    }
 }
 
 #[derive(Module, Debug)]
