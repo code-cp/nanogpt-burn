@@ -48,7 +48,7 @@ pub fn train<B: AutodiffBackend, D: Dataset<TextGenerationItem> + 'static>(
     let dataloader_train = DataLoaderBuilder::new(batcher_train)
         .batch_size(config.batch_size)
         .num_workers(4)
-        .build(SamplerDataset::new(dataset_train, 10_000)); 
+        .build(SamplerDataset::new(dataset_train, 50_000)); 
 
     let dataloader_test = DataLoaderBuilder::new(batcher_test)
         .batch_size(config.batch_size)

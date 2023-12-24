@@ -87,7 +87,7 @@ impl<B: Backend> TextGenerationModel<B> {
         let index_positions = Tensor::arange(0..block_size, device)
         .reshape([1, block_size])
         .repeat(0, batch_size);
-        println!("index_positions {index_positions:?}"); 
+        // println!("index_positions {index_positions:?}"); 
 
         let embedding_positions = self.embedding_pos.forward(index_positions); 
         let embedding_tokens = self.embedding_token.forward(inputs);

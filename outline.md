@@ -12,3 +12,6 @@
       - tril
    - multi head attention 
 - visualization 
+- results 
+   - train one epoch -> white spaces 
+   - train ~40 epochs -> E  

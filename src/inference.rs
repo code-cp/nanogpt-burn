@@ -47,13 +47,14 @@ pub fn infer<B: Backend> (
     println!("Running inference ...");
     let initial_input = vec![" "; config.block_size+1].join(""); 
     let mut samples = TextGenerationItem::new(initial_input);
-    let n_chars = 10; 
+    let n_chars = config.block_size; 
     for _ in 0..n_chars {
         // println!("samples {}", samples.text); 
 
         let item = batcher.batch(vec![samples.clone(); config.batch_size]); 
         let logits = model.infer(item); 
         // focus only on the last time step
+        // shape is 1 x 1 x vocab size
         let logits = logits.slice([0..1, config.block_size-1..config.block_size, 0..tokenizer.vocab_size()]);
         // println!("logits shape {:?}", logits.dims()); 
         let class_index = logits.argmax(2).into_data().convert::<i32>().value[0];
