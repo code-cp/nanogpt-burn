@@ -58,8 +58,9 @@ fn main() {
     );
     
     let tokenizer = SimpleTokenizer::new(&dataset_char); 
-    infer::<Backend>(
+    let output = infer::<Backend>(
         artifact_dir,
         tokenizer, 
     );  
+    println!("GPT output\n{output}"); 
 }

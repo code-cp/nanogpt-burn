@@ -18,7 +18,7 @@ use crate::model::TextGenerationModelConfig;
 pub fn infer<B: Backend> (
     artifact_dir: &str, 
     tokenizer: SimpleTokenizer,
-) {
+) -> String {
     // Load experiment configuration
     let config = ExperimentConfig::load(format!("{artifact_dir}/config.json").as_str())
         .expect("Config file should present");
@@ -52,7 +52,9 @@ pub fn infer<B: Backend> (
 
     let initial_input = vec![" "; config.block_size+1].join(""); 
     let mut samples = TextGenerationItem::new(initial_input);
-    let n_chars = config.block_size; 
+    // let n_chars = config.block_size;
+    let n_chars = 1; 
+    let mut output = String::new(); 
     for _ in 0..n_chars {
         // println!("samples {}", samples.text); 
 
@@ -68,12 +70,12 @@ pub fn infer<B: Backend> (
         // let class_index = logits.argmax(2).into_data().convert::<i32>().value[0];
 
         let prob = activation::softmax(logits, 2);
-        println!("prob {:?}", prob.to_data());
+        // println!("prob {:?}", prob.to_data());
         let mut probabilities: Vec<f32> = Vec::new(); 
         for val in prob.iter_dim(2) {
             probabilities.push(val.into_scalar().elem::<f32>()); 
         }
-        println!("probabilities {probabilities:?}"); 
+        // println!("probabilities {probabilities:?}"); 
         let weighted_index = WeightedIndex::new(&probabilities).unwrap();
         let class_index = weighted_index.sample(&mut rng);
 
@@ -84,6 +86,10 @@ pub fn infer<B: Backend> (
 
         // Print sample text, predicted logits and predicted class
         // avoid println which prints a new line 
-        print!("{new_char}"); 
+        // print!("{new_char}"); 
+
+        output += new_char.as_str(); 
     }
+
+    output
 }
