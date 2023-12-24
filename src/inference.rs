@@ -4,8 +4,11 @@ use burn::{
     module::Module,
     record::{CompactRecorder, Recorder, DefaultRecorder},
     tensor::backend::Backend,
+    tensor::{activation, ElementConversion, Bool, Int, Tensor, Device},
 };
 use std::sync::Arc;
+use rand::distributions::{Distribution, WeightedIndex};
+use rand::Rng;
 
 use crate::data::{TextGenerationBatcher, TextGenerationItem}; 
 use crate::tokenizer::{SimpleTokenizer, Tokenizer};
@@ -45,6 +48,8 @@ pub fn infer<B: Backend> (
 
     // Run inference on the given text samples
     println!("Running inference ...");
+    let mut rng = rand::thread_rng();
+
     let initial_input = vec![" "; config.block_size+1].join(""); 
     let mut samples = TextGenerationItem::new(initial_input);
     let n_chars = config.block_size; 
@@ -56,8 +61,22 @@ pub fn infer<B: Backend> (
         // focus only on the last time step
         // shape is 1 x 1 x vocab size
         let logits = logits.slice([0..1, config.block_size-1..config.block_size, 0..tokenizer.vocab_size()]);
-        // println!("logits shape {:?}", logits.dims()); 
-        let class_index = logits.argmax(2).into_data().convert::<i32>().value[0];
+        let max_val = logits.clone().max().into_scalar().elem::<f32>(); 
+        // println!("logits max val {:?}", max_val);
+        let logits = logits.sub_scalar(max_val); 
+        // println!("logits {:?}", logits.to_data());
+        // let class_index = logits.argmax(2).into_data().convert::<i32>().value[0];
+
+        let prob = activation::softmax(logits, 2);
+        println!("prob {:?}", prob.to_data());
+        let mut probabilities: Vec<f32> = Vec::new(); 
+        for val in prob.iter_dim(2) {
+            probabilities.push(val.into_scalar().elem::<f32>()); 
+        }
+        println!("probabilities {probabilities:?}"); 
+        let weighted_index = WeightedIndex::new(&probabilities).unwrap();
+        let class_index = weighted_index.sample(&mut rng);
+
         // println!("class_index {class_index}"); 
     
         let new_char = tokenizer.untokenize(&[class_index as usize]); 
